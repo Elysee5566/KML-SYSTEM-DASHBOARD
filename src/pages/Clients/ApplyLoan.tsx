@@ -20,9 +20,19 @@ import { CheckCircle, Signature, X } from "lucide-react";
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 export default function ApplyLoan() {
-  const { data: loanTypes = [] } = useGetLoanTypesQuery();
-  const { data: applications = [] } = useGetApplicationsQuery();
-  console.log(applications);
+  const { data: loanTypesData = [] } = useGetLoanTypesQuery();
+  const { data: applicationsData = [] } = useGetApplicationsQuery({
+    page: 1,
+    page_size: 50,
+    sort: "newest",
+  });
+  const loanTypes = Array.isArray(loanTypesData)
+    ? loanTypesData
+    : loanTypesData?.results || [];
+  const applications = Array.isArray(applicationsData)
+    ? applicationsData
+    : applicationsData?.results || [];
+  // console.log(applications);
   const [applyLoan, { isLoading }] = useApplyLoanMutation();
   const [signContract, { isLoading: signContractLoading }] =
     useSignContractMutation();
@@ -48,7 +58,7 @@ export default function ApplyLoan() {
   const BASE_URL = url;
   const getFileUrl = (path: string) =>
     path?.startsWith("http") ? path : `${BASE_URL}${path}`;
-  console.log(getFileUrl(selectedApp?.contract));
+  // console.log(getFileUrl(selectedApp?.contract));
   /* ================= APPLY ================= */
 
   const handleApply = async () => {
@@ -61,7 +71,7 @@ export default function ApplyLoan() {
       }).unwrap();
       toast.success("Application submitted");
     } catch (err: any) {
-      console.log(err.data[0]);
+      // console.log(err.data[0]);
       if (err?.data?.non_field_errors) {
         toast.error(
           err?.data?.non_field_errors[0] || err?.data[0] || err?.data,
@@ -241,7 +251,7 @@ export default function ApplyLoan() {
       const url = URL.createObjectURL(signedBlob);
       window.open(url); // preview
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error("Failed to generate signed contract");
     }
   };
@@ -281,7 +291,7 @@ export default function ApplyLoan() {
       setManualDrawer(false);
       setManualFile(null);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error("Failed to upload signed contract");
     }
   };
@@ -312,11 +322,13 @@ export default function ApplyLoan() {
               className="w-full border border-slate-300 dark:border-slate-700 bg-transparent p-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3017FE]"
             >
               <option value="">Select Loan</option>
-              {loanTypes.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.name}
-                </option>
-              ))}
+              {loanTypes
+                ?.filter((l: any) => l.is_active)
+                .map((l: any) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -458,7 +470,7 @@ export default function ApplyLoan() {
           </thead>
 
           <tbody>
-            {applications.map((app) => {
+            {applications.map((app: any) => {
               const amount = Number(app.requested_amount);
               const rate = Number(app.loan_type_details?.interest_rate || 0);
 
@@ -533,9 +545,9 @@ export default function ApplyLoan() {
                       <div className="space-x-2">
                         {!app.is_signed && app.status === "reviewed" && (
                           <>
-                            <button className="bg-green-600 text-white px-2 py-1 rounded text-xs">
+                            {/* <button className="bg-green-600 text-white px-2 py-1 rounded text-xs">
                               E-Sign
-                            </button>
+                            </button> */}
 
                             <button
                               onClick={() => {
@@ -544,7 +556,7 @@ export default function ApplyLoan() {
                               }}
                               className="bg-yellow-500 text-white px-2 py-1 rounded text-xs"
                             >
-                              Manual Sign
+                              Sign Contract
                             </button>
                           </>
                         )}
@@ -570,7 +582,7 @@ export default function ApplyLoan() {
 
       {/* MOBILE CARDS */}
       <div className="md:hidden space-y-3">
-        {applications.map((app) => {
+        {applications.map((app: any) => {
           const amount = Number(app.requested_amount);
           const rate = Number(app.loan_type_details?.interest_rate || 0);
 

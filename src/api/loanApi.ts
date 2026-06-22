@@ -28,10 +28,12 @@ export const loanTypeApi = createApi({
 
   endpoints: (builder) => ({
     // GET ALL
-    getLoanTypes: builder.query<LoanType[], void>({
+    getLoanTypes: builder.query<any, void>({
       query: () => "/loans/loan-types/",
       providesTags: ["LoanType"],
     }),
+
+
 
     // CREATE
     createLoanType: builder.mutation({
@@ -62,22 +64,55 @@ export const loanTypeApi = createApi({
       invalidatesTags: ["LoanType"],
     }),
     /* ============= LOAN API ======== */
-    getLoans: builder.query<any, void>({
-      query: () => "/loans/list",
+    getLoans: builder.query<any, any>({
+      query: ({
+        page = 1,
+        page_size = 10,
+        search = "",
+        status = "all",
+        from_date = "",
+        to_date = "",
+      }) => ({
+        url: "/loans/list",
+        params: {
+          page,
+          page_size,
+          search,
+          status,
+          from_date,
+          to_date,
+        },
+      }),
+
+      providesTags: ["Loans"],
+    }),
+    // GET ACTIVE LOANS
+    getActiveLoans: builder.query<any, void>({
+      query: () => "/loans/active/",
       providesTags: ["Loans"],
     }),
     //Create Loan Admin
     createLoan: builder.mutation({
-    query: (data) => ({
-      url: "/loans/loans/create-manual/",
-      method: "POST",
-      body: data,
+      query: (data) => ({
+        url: "/loans/loans/create-manual/",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Loans"],
     }),
-  }),
+    updateLoan: builder.mutation({
+      query: ({ id, formData }) => ({
+        url: `/loans/loans/${id}/`,   // 👈 matches DRF partial_update
+        method: "PATCH",
+        body: formData,
+      }),
+
+      invalidatesTags: ["Loans"], // 👈 important for refresh
+    }),
 
   }),
-  
-  
+
+
 });
 
 export const {
@@ -86,5 +121,7 @@ export const {
   useUpdateLoanTypeMutation,
   useDeleteLoanTypeMutation,
   useGetLoansQuery,
+  useGetActiveLoansQuery,
+  useUpdateLoanMutation,
   useCreateLoanMutation,
 } = loanTypeApi;

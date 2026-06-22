@@ -20,7 +20,7 @@ export const api = createApi({
     //         return headers
     //     }
     // }),
-    baseQuery: baseQueryWithAuth, 
-    tagTypes: ["User", "Client", "Loan", "Payment", "Application","Users"],
+    baseQuery: baseQueryWithAuth,
+    tagTypes: ["User", "Client", "Loan", "Payment", "Application", "Users", "ResetRequests", "PastLoans", "Onboarding"],
     endpoints: () => ({}),
 });

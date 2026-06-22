@@ -123,7 +123,7 @@ export default function LoanDrawer({
           </div>
 
           {/* ACTION */}
-          {loan.status === "active" && (
+          {loan.status !== "paid" && (
             <button
               onClick={() => setShowPayment((v) => !v)}
               className="w-full bg-gray-900 text-white py-2 rounded-lg"

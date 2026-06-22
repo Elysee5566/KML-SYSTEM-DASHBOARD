@@ -36,7 +36,7 @@ export default function ChangePassword() {
         navigate("/dashboard");
       }, 800);
     } catch (err: any) {
-        console.log(err)
+        // console.log(err)
       toast.error(err?.data?.non_field_errors[0] || "Failed to change password");
     }
   };

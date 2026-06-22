@@ -7,7 +7,12 @@ import { SIDEBAR_CONFIG } from "./SideBarConfig";
 import type { RootState } from "../app/store";
 
 import { useGetLoansQuery } from "../api/loanApi";
-import { useGetApplicationsQuery } from "../api/loanapplication";
+import {
+  useGetApplicationsQuery,
+  useGetPublicApplicationsQuery,
+} from "../api/loanapplication";
+import { useGetResetRequestsQuery } from "../api/usersApi";
+import { ProfileDropdown } from "./ProfileDropdown";
 
 export function Sidebar({ open, setOpen, onLogout }: any) {
   const location = useLocation();
@@ -18,28 +23,80 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
   /* =========================
-     DATA (LIVE COUNTS)
+     DATA
   ========================= */
-  const { data: loans = [] } = useGetLoansQuery(undefined, {
-    pollingInterval: 100000,
-  });
-
-  const { data: applications = [] } = useGetApplicationsQuery(undefined, {
-    pollingInterval: 100000,
-  });
-
-  const pendingLoans = useMemo(
-    () => loans.filter((l: any) => l.status === "pending").length,
-    [loans],
+  const { data: loansData } = useGetLoansQuery(
+    {
+      page: 1,
+      page_size: 1000,
+      status: "pending",
+    },
+    {
+      pollingInterval: 600000,
+      skip: role === "client",
+    },
   );
+  // const loans = Array.isArray(loansData) ? loansData : loansData?.results || [];
 
-  const pendingApplications = useMemo(
-    () => applications.filter((a: any) => a.status === "pending").length,
-    [applications],
+  const { data: applicationsData = [] } = useGetApplicationsQuery(
+    {
+      page: 1,
+      page_size: 1000,
+      status: "pending",
+    },
+    {
+      pollingInterval: 600000,
+      skip: role === "client",
+    },
   );
+  // const applications = Array.isArray(applicationsData)
+  //   ? applicationsData
+  //   : applicationsData?.results || [];
+
+  const { data: publicApplicationsData = [] } = useGetPublicApplicationsQuery(
+    {
+      page: 1,
+      page_size: 1000,
+      status: "pending",
+    },
+    {
+      pollingInterval: 600000,
+      skip: role === "client",
+    },
+  );
+  // const publicApplications = Array.isArray(publicApplicationsData)
+  //   ? publicApplicationsData
+  //   : publicApplicationsData?.results || [];
+  // console.log("Public Applications in Sidebar:", publicApplications);
+
+  const { data: passwordResetRequestsData = [] } = useGetResetRequestsQuery(
+    undefined,
+    {
+      pollingInterval: 600000,
+      skip: role === "client",
+    },
+  );
+  const passwordResetRequests = Array.isArray(passwordResetRequestsData)
+    ? passwordResetRequestsData
+    : passwordResetRequestsData?.results || [];
 
   /* =========================
-     SECURITY CHECKS
+     COUNTS
+  ========================= */
+  const pendingLoans = loansData?.count || 0;
+  const pendingApplications = applicationsData?.count || 0;
+
+  const pendingPublicApplications = publicApplicationsData?.count || 0;
+
+  const pendingPasswordResetRequests = useMemo(() => {
+    if (role === "client") return 0;
+
+    return passwordResetRequests.filter((r: any) => r.status === "PENDING")
+      .length;
+  }, [passwordResetRequests, role]);
+
+  /* =========================
+     AUTH
   ========================= */
   useEffect(() => {
     if (!role) navigate("/");
@@ -50,7 +107,7 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
   const baseMenu = SIDEBAR_CONFIG[role];
 
   /* =========================
-     ENRICH MENU WITH COUNTS
+     MENU COUNTS
   ========================= */
   const menuItems = useMemo(() => {
     return baseMenu.map((item: any) => {
@@ -59,19 +116,35 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
       return {
         ...item,
         children: item.children.map((child: any) => {
-          if (child.to === "/dashboard/loans") {
-            return { ...child, count: pendingLoans };
-          }
+          switch (child.to) {
+            case "/dashboard/loans":
+              return { ...child, count: pendingLoans };
 
-          if (child.to === "/dashboard/loan-applications") {
-            return { ...child, count: pendingApplications };
-          }
+            case "/dashboard/loan-applications":
+              return { ...child, count: pendingApplications };
 
-          return child;
+            case "/dashboard/public-applications":
+              return { ...child, count: pendingPublicApplications };
+
+            case "/dashboard/reset-password-requests":
+              return {
+                ...child,
+                count: pendingPasswordResetRequests,
+              };
+
+            default:
+              return child;
+          }
         }),
       };
     });
-  }, [baseMenu, pendingLoans, pendingApplications]);
+  }, [
+    baseMenu,
+    pendingLoans,
+    pendingApplications,
+    pendingPublicApplications,
+    pendingPasswordResetRequests,
+  ]);
 
   /* =========================
      AUTO OPEN ACTIVE MENU
@@ -81,17 +154,17 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
 
     menuItems.forEach((item: any) => {
       if (item.children) {
-        const isActive = item.children.some((c: any) =>
-          location.pathname.startsWith(c.to),
+        const active = item.children.some((child: any) =>
+          location.pathname.startsWith(child.to),
         );
 
-        if (isActive) {
+        if (active) {
           newOpenMenus[item.label] = true;
         }
       }
     });
 
-    setOpenMenus(newOpenMenus);
+    setOpenMenus((prev) => ({ ...prev, ...newOpenMenus }));
   }, [location.pathname, menuItems]);
 
   const toggleMenu = (label: string) => {
@@ -106,48 +179,51 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
       {/* BACKDROP */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/40 z-40"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
           onClick={() => setOpen(false)}
         />
       )}
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-primary text-white transform transition-transform duration-300
+        className={`fixed top-0 left-0 z-50 h-full w-auto ${role === "client" ? `bg-black` : `bg-primary`} text-white transform transition-transform duration-300
         ${open ? "translate-x-0" : "-translate-x-full"}
-        md:translate-x-0 md:static`}
+        lg:translate-x-0 lg:static`}
       >
         {/* HEADER */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <span className="font-bold text-lg">KML</span>
 
-          <button onClick={() => setOpen(false)} className="md:hidden">
+          <button
+            onClick={() => setOpen(false)}
+            className="lg:hidden hover:text-gray-300"
+          >
             <X />
           </button>
         </div>
 
-        {/* MENU */}
+        {/* BODY */}
         <div className="flex flex-col h-[calc(100%-64px)] overflow-y-auto">
-          <nav className="p-3 flex flex-col gap-2">
+          {/* NAV */}
+          <nav className="p-3 space-y-2">
             {menuItems.map((item: any) => {
               const Icon = item.icon;
 
               /* =========================
-                 CHILD MENU
+                 MENU WITH CHILDREN
               ========================= */
               if (item.children) {
                 const isOpen = openMenus[item.label];
 
                 return (
                   <div key={item.label}>
-                    {/* PARENT */}
                     <button
                       onClick={() => toggleMenu(item.label)}
-                      className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-white/10 text-sm"
+                      className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/10 text-sm"
                     >
                       <div className="flex items-center gap-3">
                         <Icon size={20} />
-                        <span>{item.label}</span>
+                        <span className="">{item.label}</span>
                       </div>
 
                       {isOpen ? (
@@ -157,19 +233,17 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
                       )}
                     </button>
 
-                    {/* CHILDREN */}
                     {isOpen && (
-                      <div className="ml-6 mt-1 flex flex-col gap-1">
+                      <div className="ml-6 mt-1 space-y-1">
                         {item.children.map((child: any) => {
-                          const active = location.pathname.startsWith(
-                            child.to,
-                          );
+                          const active = location.pathname.startsWith(child.to);
 
                           return (
                             <Link
                               key={child.to}
                               to={child.to}
-                              className={`flex items-center justify-between p-2 rounded-md text-sm transition ${
+                              onClick={() => setOpen(false)}
+                              className={`flex items-center  justify-between p-2 rounded-md text-xs md:text-sm transition ${
                                 active
                                   ? "bg-white text-primary font-semibold"
                                   : "hover:bg-white/10"
@@ -178,7 +252,7 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
                               <span>{child.label}</span>
 
                               {child.count > 0 && (
-                                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full min-w-5.5 text-center">
                                   {child.count}
                                 </span>
                               )}
@@ -192,7 +266,7 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
               }
 
               /* =========================
-                 SINGLE MENU ITEM
+                 SINGLE ITEM
               ========================= */
               const active = location.pathname.startsWith(item.to);
 
@@ -200,6 +274,7 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
                 <Link
                   key={item.to}
                   to={item.to}
+                  onClick={() => setOpen(false)}
                   className={`flex items-center gap-3 p-3 rounded-lg text-sm transition ${
                     active
                       ? "bg-white text-primary font-semibold shadow"
@@ -213,14 +288,17 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
             })}
           </nav>
 
-          {/* LOGOUT */}
-          <div className="mt-auto p-4 border-t border-white/10">
+          {/* FOOTER */}
+          {/* <div className="mt-auto p-4 border-t border-white/10">
             <button
               onClick={onLogout}
-              className="text-red-300 text-sm hover:text-red-200"
+              className="text-red-300 text-sm hover:text-red-200 transition"
             >
               Logout
             </button>
+          </div> */}
+          <div className="mt-auto p-4 border-t border-white/10 flex justify-start">
+            <ProfileDropdown onLogout={onLogout} />
           </div>
         </div>
       </aside>

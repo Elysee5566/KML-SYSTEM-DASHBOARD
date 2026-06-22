@@ -45,7 +45,7 @@ export const paymentsApi = createApi({
         try {
           await queryFulfilled;
           // you can trigger toast here if you want globally
-        } catch {}
+        } catch { }
       },
 
       invalidatesTags: ["Payments", "Loans"],
@@ -54,26 +54,27 @@ export const paymentsApi = createApi({
     /* ================= LIST ================= */
 
     getPayments: builder.query<
-      LoanPayment[],
-      { status?: string } | void
+      any,
+      {
+        page?: number;
+        page_size?: number;
+        status?: string;
+      } | void
     >({
-      query: (params) => {
-        if (!params) return "/loans/loan-payments/";
-        return {
-          url: "/loans/loan-payments/",
-          params,
-        };
-      },
+      query: (params) => ({
+        url: "/loans/loan-payments/",
+        params,
+      }),
 
       providesTags: (result) =>
-        result
+        result?.results
           ? [
-              ...result.map((p) => ({
-                type: "Payments" as const,
-                id: p.id,
-              })),
-              { type: "Payments", id: "LIST" },
-            ]
+            ...result.results.map((p: any) => ({
+              type: "Payments" as const,
+              id: p.id,
+            })),
+            { type: "Payments", id: "LIST" },
+          ]
           : [{ type: "Payments", id: "LIST" }],
     }),
 
@@ -83,7 +84,15 @@ export const paymentsApi = createApi({
       query: (id) => `/loans/loan-payments/${id}/`,
       providesTags: (_, __, id) => [{ type: "Payments", id }],
     }),
-
+    /* ================= EDIT PAYMENT ================= */
+    updatePayment: builder.mutation({
+      query: ({ id, formData }) => ({
+        url: `/loans/loan-payments/${id}/update_payment/`,
+        method: "PATCH",
+        body: formData,
+      }),
+      invalidatesTags: ['Payments']
+    }),
     /* ================= REVIEW ================= */
 
     reviewPayment: builder.mutation<
@@ -106,7 +115,7 @@ export const paymentsApi = createApi({
             "getPayments",
             undefined,
             (draft) => {
-              const payment = draft.find((p) => p.id === id);
+              const payment = draft.find((p: any) => p.id === id);
               if (payment) {
                 payment.status =
                   action === "approve" ? "approved" : "rejected";
@@ -122,11 +131,11 @@ export const paymentsApi = createApi({
         }
       },
 
-    //   invalidatesTags: (result, error, { id }) => [
-    //     { type: "Payments", id },
-    //     { type: "Payments", id: "LIST" },
-    //     { type: "Loans", id: "LIST" },
-    //   ],
+      //   invalidatesTags: (result, error, { id }) => [
+      //     { type: "Payments", id },
+      //     { type: "Payments", id: "LIST" },
+      //     { type: "Loans", id: "LIST" },
+      //   ],
     }),
 
     /* ================= DELETE (OPTIONAL) ================= */
@@ -138,6 +147,14 @@ export const paymentsApi = createApi({
       }),
       invalidatesTags: ["Payments"],
     }),
+    // CANCEL PAYMENT AND REVERT LOAN BALANCE
+    cancelPayment: builder.mutation({
+      query: ({ id }) => ({
+        url: `loans/loan-payments/${id}/cancel/`,
+        method: "POST",
+      }),
+      invalidatesTags: ["Payments", "Loans"],
+    }),
   }),
 });
 
@@ -147,6 +164,8 @@ export const {
   useCreatePaymentMutation,
   useGetPaymentsQuery,
   useGetPaymentByIdQuery,
+  useUpdatePaymentMutation,
   useReviewPaymentMutation,
+  useCancelPaymentMutation,
   useDeletePaymentMutation,
 } = paymentsApi;

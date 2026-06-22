@@ -36,7 +36,7 @@ export const baseQueryWithAuth = async (args: any, api: any, extraOptions: any) 
 
       // optional: redirect
       setTimeout(() => {
-        window.location.href = "/login"
+        window.location.href = "/"
       }, 1000)
     }
 

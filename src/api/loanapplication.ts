@@ -6,26 +6,42 @@ import { baseQueryWithAuth } from "../features/baseQueryApi";
 export interface LoanApplication {
   id: number;
   loan_type: number;
-  loan_type_details:any;
+  loan_type_details: any;
   requested_amount: string;
   status: string;
   contract?: string;
   signed_contract?: string;
   is_signed: boolean;
   created_at: string;
-  comment?:string
-  client_data?:any
+  comment?: string
+  client_data?: any
 }
 
 export const loanApplicationApi = createApi({
   reducerPath: "loanApplicationApi",
   baseQuery: baseQueryWithAuth,
-  tagTypes: ["LoanApplication","PublicApplications"],
+  tagTypes: ["LoanApplication", "PublicApplications"],
 
   endpoints: (builder) => ({
     // GET
-    getApplications: builder.query<LoanApplication[], void>({
-      query: () => "/loans/loan-applications/",
+    getApplications: builder.query<
+      any, any
+    >({
+      query: ({
+        page = 1,
+        search = "",
+        status = "all",
+        sort = "newest",
+      }) => ({
+        url: "/loans/loan-applications/",
+        params: {
+          page,
+          page_size: 50,
+          search,
+          status,
+          sort,
+        },
+      }),
       providesTags: ["LoanApplication"],
     }),
 
@@ -63,21 +79,45 @@ export const loanApplicationApi = createApi({
       },
       invalidatesTags: ["LoanApplication"],
     }),
+    // UPLOAD Signed CONTRACT
+    // uploadSignedContract: builder.mutation({
+    //   query: ({ id, file }) => {
+    //     const formData = new FormData();
+    //     formData.append("signed_contract", file);
+    //     return {
+    //       url: `/loans/loan-applications/${id}/upload_contract/`,
+    //       method: "POST",
+    //       body: formData,
+    //     };
+    //   },
+    //   invalidatesTags: ["LoanApplication"],
+    // }),
 
     // SIGN
     signContract: builder.mutation({
-      query: ({id,data}) => ({
+      query: ({ id, data }) => ({
         url: `/loans/loan-applications/${id}/sign/`,
         method: "POST",
-        body:data
+        body: data
       }),
       invalidatesTags: ["LoanApplication"],
     }),
-    uploadSignedContract: builder.mutation<void,any>({
-      query: ({id,data}) => ({
+    uploadSignedContract: builder.mutation<void, any>({
+      query: ({ id, data }) => ({
         url: `/loans/loan-applications/${id}/sign/`,
         method: "POST",
-        body:data
+        body: data
+      }),
+      invalidatesTags: ["LoanApplication"],
+    }),
+    // ==========================
+    // Controlled Application Editting (Admin/Manager)
+    // ==========================
+    updateApplication: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/loans/loan-applications/${id}/edit_application/`,
+        method: "PATCH",
+        body: data,
       }),
       invalidatesTags: ["LoanApplication"],
     }),
@@ -96,20 +136,39 @@ export const loanApplicationApi = createApi({
         method: "POST",
         body: data,
       }),
+      invalidatesTags: ["PublicApplications"],
     }),
 
     // =========================
-    // 🔐 GET ALL APPLICATIONS (Admin/Manager/Reviewer)
+    // 🔐 GET ALL PUBLIC APPLICATIONS (Admin/Manager/Reviewer)
     // =========================
-    getPublicApplications: builder.query<any,void>({
-      query: () => "/loans/admin/public-applications/",
+    getPublicApplications: builder.query<
+      any,
+      {
+        page?: number;
+        page_size?: number;
+        status?: string;
+      }
+    >({
+      query: ({
+        page,
+        page_size,
+        status = "all",
+      } = {}) => ({
+        url: "/loans/admin/public-applications/",
+        params: {
+          page,
+          page_size,
+          status,
+        },
+      }),
       providesTags: ["PublicApplications"],
     }),
 
     // =========================
     // 🔐 GET SINGLE APPLICATION
     // =========================
-    getPublicApplication: builder.query({
+    getPublicApplication: builder.query<any, void>({
       query: (id) => `/loans/admin/public-applications/${id}/`,
     }),
 
@@ -124,6 +183,7 @@ export const loanApplicationApi = createApi({
       }),
       invalidatesTags: ["PublicApplications"],
     }),
+
 
     // =========================
     // 🔐 REVIEW
@@ -140,7 +200,7 @@ export const loanApplicationApi = createApi({
     // 🔐 CONVERT
     // =========================
     convertPublicApplication: builder.mutation({
-      query: ({id,body}) => ({
+      query: ({ id, body }) => ({
         url: `/loans/admin/public-applications/${id}/convert/`,
         method: "POST",
         body
@@ -170,6 +230,18 @@ export const loanApplicationApi = createApi({
       }),
       invalidatesTags: ["LoanApplication"],
     }),
+    // Toggling System Settings
+    getSystemSettings: builder.query({
+      query: () => "/system-settings/",
+    }),
+
+    updateSystemSettings: builder.mutation({
+      query: (body) => ({
+        url: "/system-settings/",
+        method: "PATCH",
+        body,
+      }),
+    }),
   })
 });
 
@@ -180,6 +252,7 @@ export const {
   useUploadContractMutation,
   useSignContractMutation,
   useUploadSignedContractMutation,
+  useUpdateApplicationMutation,
   useFinalizeLoanMutation,
   useCreatePublicApplicationMutation,
   useGetPublicApplicationsQuery,
@@ -188,5 +261,7 @@ export const {
   useReviewPublicApplicationMutation,
   useConvertPublicApplicationMutation,
   useRejectPublicApplicationMutation,
-  useCreateAdminApplicationMutation
+  useCreateAdminApplicationMutation,
+  useGetSystemSettingsQuery,
+  useUpdateSystemSettingsMutation
 } = loanApplicationApi;

@@ -3,7 +3,15 @@ import { Pencil, Trash2, Eye } from "lucide-react";
 import { toast } from "react-toastify";
 import { useDeleteClientMutation } from "../../../api/clientApi";
 
-export default function ClientTable({ clients, isLoading, onEdit }: any) {
+export default function ClientTable({
+  clients,
+  isLoading,
+  onEdit,
+  grid,
+  page,
+  totalPages,
+  onPageChange,
+}: any) {
   const [deleteClient] = useDeleteClientMutation();
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
 
@@ -31,146 +39,171 @@ export default function ClientTable({ clients, isLoading, onEdit }: any) {
 
   if (!clients.length) {
     return (
-      <div className="text-center py-10 text-gray-500">
-        No clients yet 🚀
-      </div>
+      <div className="text-center py-10 text-gray-500">No clients yet 🚀</div>
     );
   }
 
   return (
     <>
       {/* ================= MOBILE ================= */}
-      <div className="block md:hidden space-y-4">
-        {clients.map((c: any) => (
-          <div
-            key={c.id}
-            className="bg-white p-4 rounded-2xl shadow-sm border"
-          >
-            {/* HEADER */}
-            <div className="flex justify-between items-start">
-              <div className="flex gap-3 items-center">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-semibold text-blue-600">
-                  {c.names?.charAt(0)}
+      {grid && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {clients.map((c: any) => (
+            <div
+              key={c.id}
+              className="bg-white p-4 rounded-2xl shadow-sm border"
+            >
+              {/* HEADER */}
+              <div className="flex justify-between items-start">
+                <div className="flex gap-3 items-center">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-semibold text-blue-600">
+                    {c.names?.charAt(0)}
+                  </div>
+
+                  <div>
+                    <p className="font-medium">{c.names}</p>
+                    <p className="text-xs text-gray-400">{c.email}</p>
+                  </div>
                 </div>
 
-                <div>
-                  <p className="font-medium">{c.names}</p>
-                  <p className="text-xs text-gray-400">{c.email}</p>
-                </div>
+                <StatusBadge status={c.status || "active"} />
               </div>
 
-              <StatusBadge status={c.status || "active"} />
-            </div>
+              {/* DETAILS */}
+              <div className="mt-4 text-sm text-gray-600 space-y-1">
+                <p>
+                  <strong>Phone:</strong> {c.phone}
+                </p>
+                <p>
+                  <strong>District:</strong> {c.district}
+                </p>
+                <p>
+                  <strong>Loans:</strong> {c.total_loans || 0}
+                </p>
+                <p>
+                  <strong>Total Borrowed:</strong>{" "}
+                  {formatCurrency(c.total_borrowed || 0)}
+                </p>
+              </div>
 
-            {/* DETAILS */}
-            <div className="mt-4 text-sm text-gray-600 space-y-1">
-              <p><strong>Phone:</strong> {c.phone}</p>
-              <p><strong>District:</strong> {c.district}</p>
-              <p><strong>Loans:</strong> {c.total_loans || 0}</p>
-              <p>
-                <strong>Total Borrowed:</strong>{" "}
-                {formatCurrency(c.total_borrowed || 0)}
-              </p>
+              {/* ACTIONS */}
+              <div className="flex justify-end gap-2 mt-4">
+                <ActionButtons
+                  onView={() => setSelectedClient(c)}
+                  onEdit={() => onEdit(c)}
+                  onDelete={() => handleDelete(c.id)}
+                />
+              </div>
             </div>
-
-            {/* ACTIONS */}
-            <div className="flex justify-end gap-2 mt-4">
-              <ActionButtons
-                onView={() => setSelectedClient(c)}
-                onEdit={() => onEdit(c)}
-                onDelete={() => handleDelete(c.id)}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* ================= DESKTOP ================= */}
-      <div className="hidden md:block bg-white rounded-2xl shadow-sm border">
-        <div className="p-4 border-b flex justify-between">
-          <h2 className="font-semibold text-gray-700">Clients</h2>
-          <span className="text-sm text-gray-400">
-            {clients.length} clients
-          </span>
-        </div>
+      {!grid && (
+        <div className="w-full bg-white rounded-2xl shadow-sm border-0 md:border">
+          <div className="p-4 border-b flex justify-between">
+            <h2 className="font-semibold text-gray-700">Clients</h2>
+            <span className="text-sm text-gray-400">
+              {clients.length} clients
+            </span>
+          </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-225">
-            <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
-              <tr>
-                <th className="p-4 text-left">Client</th>
-                <th className="p-4 text-left">Phone</th>
-                <th className="p-4 text-left">Location</th>
-                <th className="p-4 text-left">Loans</th>
-                {/* <th className="p-4 text-left">Role</th> */}
-                <th className="p-4 text-left">Total Borrowed</th>
-                <th className="p-4 text-left">Status</th>
-                <th className="p-4 text-left">Joined</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
+          <div className="overflow-x-auto w-[76vw] md:[75vw] lg:w-full">
+            <table className="text-sm ">
+              <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                <tr>
+                  <th className="p-4 text-left">Client</th>
+                  <th className="p-4 text-left">Phone</th>
+                  <th className="p-4 text-left">Location</th>
+                  <th className="p-4 text-left">Loans</th>
+                  {/* <th className="p-4 text-left">Role</th> */}
+                  <th className="p-4 text-left">Total Borrowed</th>
+                  <th className="p-4 text-left">Status</th>
+                  <th className="p-4 text-left">Joined</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              {clients.map((c: any) => (
-                <tr
-                  key={c.id}
-                  className="border-t hover:bg-gray-50 transition"
-                >
-                  {/* CLIENT */}
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
-                        {c.names?.charAt(0)}
+              <tbody>
+                {clients.map((c: any) => (
+                  <tr
+                    key={c.id}
+                    className="border-t hover:bg-gray-50 transition"
+                  >
+                    {/* CLIENT */}
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
+                          {c.names?.charAt(0)}
+                        </div>
+
+                        <div>
+                          <p className="font-medium text-gray-800">{c.names}</p>
+                          <p className="text-xs text-gray-400">{c.email}</p>
+                        </div>
                       </div>
+                    </td>
 
-                      <div>
-                        <p className="font-medium text-gray-800">
-                          {c.names}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {c.email}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
+                    <td className="p-4">{c.phone}</td>
 
-                  <td className="p-4">{c.phone}</td>
-
-                  <td className="p-4 text-gray-600">
-                    {c.district}
-                  </td>
-                  {/* <td className="p-4 text-gray-700 font-medium">
+                    <td className="p-4 text-gray-600">{c.district}</td>
+                    {/* <td className="p-4 text-gray-700 font-medium">
                     {c.role}
                   </td> */}
-                  <td className="p-4 font-medium">
-                    {c.total_loans || 0}
-                  </td>
+                    <td className="p-4 font-medium">{c.total_loans || 0}</td>
 
-                  <td className="p-4 text-gray-700 font-medium">
-                    {formatCurrency(c.total_amount || 0)}
-                  </td>
+                    <td className="p-4 text-gray-700 font-medium">
+                      {formatCurrency(c.total_amount || 0)}
+                    </td>
 
-                  <td className="p-4">
-                    <StatusBadge status={c.status || "active"} />
-                  </td>
+                    <td className="p-4">
+                      <StatusBadge status={c.status || "active"} />
+                    </td>
 
-                  <td className="p-4 text-gray-500 text-xs">
-                    {new Date(c.created_at).toLocaleDateString()}
-                  </td>
+                    <td className="p-4 text-gray-500 text-xs">
+                      {new Date(c.created_at).toLocaleDateString()}
+                    </td>
 
-                  <td className="p-4">
-                    <div className="flex justify-end">
-                      <ActionButtons
-                        onView={() => setSelectedClient(c)}
-                        onEdit={() => onEdit(c)}
-                        onDelete={() => handleDelete(c.id)}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <td className="p-4">
+                      <div className="flex justify-end">
+                        <ActionButtons
+                          onView={() => setSelectedClient(c)}
+                          onEdit={() => onEdit(c)}
+                          onDelete={() => handleDelete(c.id)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      <div>
+        {/* PAGINATION */}
+
+        <div className="flex justify-end items-center gap-3 mt-4">
+          <button
+            onClick={() => onPageChange(page - 1)}
+            disabled={page === 1}
+            className="px-3 py-1 border border-gray-300 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-300"
+          >
+            Previous
+          </button>
+
+          <span className="text-sm text-gray-500">
+            Page {page} of {totalPages}
+          </span>
+
+          <button
+            onClick={() => onPageChange(page + 1)}
+            disabled={page === totalPages}
+            className="px-3 py-1 border border-gray-300 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-300"
+          >
+            Next
+          </button>
         </div>
       </div>
 
@@ -249,14 +282,11 @@ function ClientDrawer({ client, onClose }: any) {
 
       {/* PANEL */}
       <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl flex flex-col">
-        
         {/* HEADER */}
         <div className="flex items-center justify-between p-5 border-b">
           <div>
             <h2 className="text-lg font-semibold">Client Profile</h2>
-            <p className="text-xs text-gray-400">
-              Detailed information
-            </p>
+            <p className="text-xs text-gray-400">Detailed information</p>
           </div>
 
           <button
@@ -269,7 +299,6 @@ function ClientDrawer({ client, onClose }: any) {
 
         {/* CONTENT */}
         <div className="flex-1 overflow-y-auto p-5 space-y-6 text-sm">
-
           {/* PROFILE */}
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center text-xl font-semibold text-blue-600">
@@ -277,12 +306,8 @@ function ClientDrawer({ client, onClose }: any) {
             </div>
 
             <div>
-              <p className="font-semibold text-gray-800">
-                {client.names}
-              </p>
-              <p className="text-xs text-gray-400">
-                {client.email}
-              </p>
+              <p className="font-semibold text-gray-800">{client.names}</p>
+              <p className="text-xs text-gray-400">{client.email}</p>
             </div>
           </div>
 
@@ -309,10 +334,7 @@ function ClientDrawer({ client, onClose }: any) {
               label="Total Borrowed"
               value={formatCurrency(client.total_amount || 0)}
             />
-            <Info
-              label="Active Loans"
-              value={client.active_loans || 0}
-            />
+            <Info label="Active Loans" value={client.active_loans || 0} />
             <Info
               label="Outstanding Balance"
               value={formatCurrency(client.total_balance || 0)}
@@ -328,8 +350,7 @@ function ClientDrawer({ client, onClose }: any) {
 
           {/* META */}
           <div className="pt-4 border-t text-xs text-gray-400">
-            Created:{" "}
-            {new Date(client.created_at).toLocaleString()}
+            Created: {new Date(client.created_at).toLocaleString()}
           </div>
         </div>
       </div>
@@ -342,12 +363,8 @@ function ClientDrawer({ client, onClose }: any) {
 function Section({ title, children }: any) {
   return (
     <div className="space-y-2">
-      <h3 className="text-xs font-semibold text-gray-500 uppercase">
-        {title}
-      </h3>
-      <div className="bg-gray-50 rounded-xl p-3 space-y-2">
-        {children}
-      </div>
+      <h3 className="text-xs font-semibold text-gray-500 uppercase">{title}</h3>
+      <div className="bg-gray-50 rounded-xl p-3 space-y-2">{children}</div>
     </div>
   );
 }
@@ -356,9 +373,7 @@ function Info({ label, value }: any) {
   return (
     <div className="flex justify-between text-sm">
       <span className="text-gray-500">{label}</span>
-      <span className="font-medium text-gray-800">
-        {value || "—"}
-      </span>
+      <span className="font-medium text-gray-800">{value || "—"}</span>
     </div>
   );
 }

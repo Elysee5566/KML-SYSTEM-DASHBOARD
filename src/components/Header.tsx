@@ -1,20 +1,17 @@
 import { Menu, LogOut } from "lucide-react";
 
-export const Header = ({ onMenu, onLogout }: any) => {
+export const Header = ({ onMenu, onLogout, username }: any) => {
   return (
-    <header className="sticky top-0 z-40 bg-white border-b px-4 py-3 flex items-center justify-between">
-      
+    <header className="sticky top-0 z-40 bg-gray-100 border-b px-4 py-3 flex items-center justify-between">
       {/* ALWAYS visible on mobile */}
       <button
         onClick={onMenu}
-        className="p-2 rounded-lg hover:bg-gray-100 md:hidden"
+        className="p-2 rounded-lg hover:bg-gray-100 lg:hidden"
       >
         <Menu size={22} />
       </button>
 
-      <h1 className="text-sm font-semibold text-gray-700">
-        Kigali Microloans
-      </h1>
+      <h1 className="text-sm font-semibold text-gray-700">Kigali Microloans</h1>
 
       <div className="flex items-center gap-3">
         <button
@@ -25,8 +22,8 @@ export const Header = ({ onMenu, onLogout }: any) => {
           Logout
         </button>
 
-        <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
-          A
+        <div className="w-9 h-9 rounded-full bg-primary capitalize text-white flex items-center justify-center font-semibold">
+          {username?.slice(0, 2)}
         </div>
       </div>
     </header>

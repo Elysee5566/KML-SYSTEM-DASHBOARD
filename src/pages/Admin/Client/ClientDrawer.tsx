@@ -32,9 +32,9 @@ export default function ClientDrawer({ open, onClose, client }: any) {
     if (client) {
       setForm({
         ...client,
-        id_document: null,
-        job_contract: null,
-        bank_statement: null,
+        // id_document: null,
+        // job_contract: null,
+        // bank_statement: null,
       });
     }
   }, [client]);
@@ -51,29 +51,60 @@ export default function ClientDrawer({ open, onClose, client }: any) {
     try {
       const data = new FormData();
 
-      Object.keys(form).forEach((key) => {
-        if (form[key] !== null && form[key] !== "") {
-          data.append(key, form[key]);
+      Object.entries(form).forEach(([key, value]) => {
+        if (value === null || value === "") return;
+
+        // Handle file fields specially
+        if (
+          key === "id_document" ||
+          key === "job_contract" ||
+          key === "bank_statement"
+        ) {
+          // Only send newly selected files
+          if (value instanceof File) {
+            data.append(key, value);
+          }
+        } else {
+          data.append(key, value as string);
         }
       });
 
       if (client) {
-        await updateClient({ id: client.id, data }).unwrap();
+        await updateClient({
+          id: client.id,
+          data,
+        }).unwrap();
+
         toast.success("Client updated successfully");
       } else {
-        try {
-          await createClient(data).unwrap();
-          toast.success("Client created & credentials sent");
-        } catch (error) {
-          console.log(error);
-        }
+        await createClient(data).unwrap();
+
+        toast.success("Client created & credentials sent");
       }
 
       onClose();
     } catch (err: any) {
-      console.log(err);
+      console.log(err.data);
 
-      toast.error(err?.data?.detail ||err?.data?.email || "Failed to save client");
+      if (err?.data?.detail) {
+        toast.error(err.data.detail);
+      } else if (err?.data?.message) {
+        toast.error(err.data.message);
+      } else if (err?.data?.non_field_errors) {
+        toast.error(err.data.non_field_errors[0]);
+      } else if (err?.data) {
+        const firstKey = Object.keys(err.data)[0];
+
+        if (firstKey) {
+          const errorMessage = err.data[firstKey][0];
+
+          toast.error(`${firstKey}: ${errorMessage}`);
+        } else {
+          toast.error("Failed to create Client");
+        }
+      } else {
+        toast.error("Failed to create Client");
+      }
     }
   };
 
@@ -83,7 +114,7 @@ export default function ClientDrawer({ open, onClose, client }: any) {
       <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
       {/* DRAWER */}
-      <div className="w-[45vw] bg-white h-full shadow-2xl flex flex-col">
+      <div className="w-full md:w-[45vw] bg-white h-full shadow-2xl flex flex-col">
         {/* HEADER */}
         <div className="flex items-center justify-between px-6 py-5 border-b">
           <div>
@@ -139,6 +170,7 @@ export default function ClientDrawer({ open, onClose, client }: any) {
                 <option value="">Select</option>
                 <option>Single</option>
                 <option>Married</option>
+                <option>Divorced</option>
               </Select>
               {/* <Select
                 label="Role"
@@ -193,15 +225,20 @@ export default function ClientDrawer({ open, onClose, client }: any) {
           <Section title="Documents Upload">
             <FileInput
               label="ID Document"
-              onChange={(f: any) => handleChange("id_document", f)}
+              existingFile={client?.id_document}
+              onChange={(f) => handleChange("id_document", f)}
             />
+
             <FileInput
               label="Job Contract"
-              onChange={(f: any) => handleChange("job_contract", f)}
+              existingFile={client?.job_contract}
+              onChange={(f) => handleChange("job_contract", f)}
             />
+
             <FileInput
               label="Bank Statement"
-              onChange={(f: any) => handleChange("bank_statement", f)}
+              existingFile={client?.bank_statement}
+              onChange={(f) => handleChange("bank_statement", f)}
             />
           </Section>
         </div>
@@ -262,12 +299,34 @@ const Select = ({ label, value, onChange, children }: any) => (
   </div>
 );
 
-const FileInput = ({ label, onChange }: any) => (
+const FileInput = ({
+  label,
+  onChange,
+  existingFile,
+}: {
+  label: string;
+  onChange: (file: File | undefined) => void;
+  existingFile?: string;
+}) => (
   <div>
     <label className="text-xs text-gray-500">{label}</label>
+
+    {existingFile && (
+      <div className="mt-1 mb-2">
+        <a
+          href={existingFile}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-blue-600 hover:underline"
+        >
+          View Current Document
+        </a>
+      </div>
+    )}
+
     <input
       type="file"
-      className="w-full mt-1 text-sm"
+      className="w-full text-sm border border-gray-300 rounded-md py-2 px-2"
       onChange={(e) => onChange(e.target.files?.[0])}
     />
   </div>

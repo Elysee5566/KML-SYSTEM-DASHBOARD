@@ -8,6 +8,7 @@ import { paymentsApi } from "../api/paymentApi";
 import { dashboardApi } from "../api/dashboardApi";
 // import { userApi } from "../api/usersApi";
 import uiReducer from "../features/uiSlice";
+import { pastLoanSheetApi } from "../api/pastloans";
 export const store = configureStore({
     reducer: {
         auth: authReducer,
@@ -17,11 +18,12 @@ export const store = configureStore({
         [loanApplicationApi.reducerPath]: loanApplicationApi.reducer,
         [paymentsApi.reducerPath]: paymentsApi.reducer,
         [dashboardApi.reducerPath]: dashboardApi.reducer,
+        [pastLoanSheetApi.reducerPath]:pastLoanSheetApi.reducer,
         // [userApi.reducerPath]:userApi.reducer,
 
     },
     middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(api.middleware).concat(loanTypeApi.middleware).concat(loanApplicationApi.middleware).concat(paymentsApi.middleware).concat(dashboardApi.middleware),
+        getDefaultMiddleware().concat(api.middleware).concat(loanTypeApi.middleware).concat(loanApplicationApi.middleware).concat(paymentsApi.middleware).concat(dashboardApi.middleware).concat(pastLoanSheetApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

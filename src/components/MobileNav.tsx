@@ -1,9 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Users,
-  Wallet,
-} from "lucide-react";
+import { LayoutDashboard, Users, Wallet } from "lucide-react";
 
 export const MobileNav = () => {
   const location = useLocation();

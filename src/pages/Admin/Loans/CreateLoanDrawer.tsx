@@ -1,22 +1,29 @@
 import { useEffect, useState } from "react";
 import { useGetLoanTypesQuery } from "../../../api/loanApi";
 import { useCreateAdminApplicationMutation } from "../../../api/loanapplication";
-import { useGetClientsQuery } from "../../../api/clientApi";
+import { useSearchClientsQuery } from "../../../api/clientApi";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSelector } from "react-redux";
-import type { RootState } from "../../../app/store";
 
 export default function CreateLoanApplicationDrawer({ open, onClose }: any) {
   const [createApplication, { isLoading }] =
     useCreateAdminApplicationMutation();
-const { role } = useSelector((state: RootState) => state.auth);
-  const { data: clients = [] } = useGetClientsQuery(undefined, {
-  skip: role === "client",
-});
-  const { data: loanTypes = [] } = useGetLoanTypesQuery();
-
+  // const { role } = useSelector((state: RootState) => state.auth);
   const [search, setSearch] = useState("");
+
+  const { data: clients = [] } = useSearchClientsQuery(search, {
+    skip: search.length < 2,
+  });
+  console.log("Clients search results:", clients);
+
+  // const clients = Array.isArray(clientsData)
+  //   ? clientsData
+  //   : clientsData?.results || [];
+  const { data: loanTypesData = [] } = useGetLoanTypesQuery();
+  const loanTypes = Array.isArray(loanTypesData)
+    ? loanTypesData
+    : loanTypesData?.results || [];
+
   const [showDropdown, setShowDropdown] = useState(false);
 
   const [form, setForm] = useState<any>({
@@ -57,9 +64,9 @@ const { role } = useSelector((state: RootState) => state.auth);
     (lt: any) => lt.id === Number(form.loan_type),
   );
 
-  const filteredClients = clients.filter((c: any) =>
-    `${c.names} ${c.phone}`.toLowerCase().includes(search.toLowerCase()),
-  );
+  // const filteredClients = clients.filter((c: any) =>
+  //   `${c.names} ${c.phone}`.toLowerCase().includes(search.toLowerCase()),
+  // );
 
   const handleSubmit = async () => {
     if (!form.client || !form.loan_type || !form.requested_amount) {
@@ -87,13 +94,12 @@ const { role } = useSelector((state: RootState) => state.auth);
       data.append("client", String(Number(form.client)));
       data.append("loan_type", String(Number(form.loan_type)));
       data.append("requested_amount", String(Number(form.requested_amount)));
-      if(form.is_signed){
+      if (form.is_signed) {
         data.append("status", "signed");
-      }
-      else{
+      } else {
         data.append("status", "reviewed");
       }
-       // Admin-created applications are auto-approved
+      // Admin-created applications are auto-approved
       if (form.comment) data.append("comment", form.comment);
 
       if (form.contract) data.append("contract", form.contract);
@@ -106,28 +112,35 @@ const { role } = useSelector((state: RootState) => state.auth);
       } else {
         data.append("is_signed", "false");
       }
-      for (let pair of data.entries()) {
-        console.log(pair[0], pair[1]);
-      }
 
       await createApplication(data).unwrap();
 
-      toast.success("Application created successfully");
+      toast.success(
+        "Application created successfully,Check in Loan Application to continue process",
+      );
       onClose();
-    } catch (err:any) {
-      console.error(err);
-      if(err?.data?.detail){
+    } catch (err: any) {
+      console.log(err.data);
+
+      if (err?.data?.detail) {
         toast.error(err.data.detail);
-      }
-      else if (err?.data?.message) {
+      } else if (err?.data?.message) {
         toast.error(err.data.message);
-       }
-       else if (err?.data?.non_field_errors) {
+      } else if (err?.data?.non_field_errors) {
         toast.error(err.data.non_field_errors[0]);
-       }
-       else{
-      toast.error("Failed to create application");
-       }
+      } else if (err?.data) {
+        const firstKey = Object.keys(err.data)[0];
+
+        if (firstKey) {
+          const errorMessage = err.data[firstKey][0];
+
+          toast.error(`${firstKey}: ${errorMessage}`);
+        } else {
+          toast.error("Failed to create application");
+        }
+      } else {
+        toast.error("Failed to create application");
+      }
     }
   };
 
@@ -180,15 +193,20 @@ const { role } = useSelector((state: RootState) => state.auth);
                 }}
                 onFocus={() => setShowDropdown(true)}
               />
+              {isLoading && (
+                <div className="p-2 text-sm text-gray-400">
+                  Loading clients...
+                </div>
+              )}
 
               {showDropdown && search && (
                 <div className="border rounded-lg mt-2 max-h-40 overflow-y-auto bg-white shadow">
-                  {filteredClients.length === 0 ? (
+                  {clients.length === 0 ? (
                     <div className="p-2 text-sm text-gray-400">
                       No clients found
                     </div>
                   ) : (
-                    filteredClients.map((c: any) => (
+                    clients.map((c: any) => (
                       <div
                         key={c.id}
                         className="p-2 hover:bg-blue-50 cursor-pointer"
@@ -198,7 +216,7 @@ const { role } = useSelector((state: RootState) => state.auth);
                           setShowDropdown(false);
                         }}
                       >
-                        {c.names} — {c.phone}
+                        {c.names} — {c.phone}-{c.email}
                       </div>
                     ))
                   )}
@@ -254,10 +272,11 @@ const { role } = useSelector((state: RootState) => state.auth);
 
             {/* ================= DOCUMENTS ================= */}
             <div className="bg-gray-50 p-4 rounded-xl mb-6">
-              <h3 className="font-medium mb-3 text-gray-700">Documents</h3>
+              <h3 className="font-medium mb-3 text-gray-700">Add Contract</h3>
 
               <input
                 type="file"
+                accept=".pdf,application/pdf,.docx,.doc"
                 className="mb-3 block border border-gray-200 rounded-lg p-2 w-full text-sm"
                 onChange={(e) =>
                   setForm({
@@ -285,7 +304,8 @@ const { role } = useSelector((state: RootState) => state.auth);
               {form.is_signed && (
                 <input
                   type="file"
-                  className="block w-full text-sm"
+                  accept=".pdf,application/pdf"
+                  className="block w-full border border-gray-200  p-2 rounded-lg text-sm"
                   onChange={(e) =>
                     setForm({
                       ...form,
