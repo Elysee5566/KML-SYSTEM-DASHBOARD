@@ -28,11 +28,11 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
   const { data: loansData } = useGetLoansQuery(
     {
       page: 1,
-      page_size: 1000,
+      page_size: 50,
       status: "pending",
     },
     {
-      pollingInterval: 600000,
+      pollingInterval: 0,
       skip: role === "client",
     },
   );
@@ -45,7 +45,7 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
       status: "pending",
     },
     {
-      pollingInterval: 600000,
+      pollingInterval: 0,
       skip: role === "client",
     },
   );
@@ -60,7 +60,7 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
       status: "pending",
     },
     {
-      pollingInterval: 600000,
+      pollingInterval: 0,
       skip: role === "client",
     },
   );
@@ -72,7 +72,7 @@ export function Sidebar({ open, setOpen, onLogout }: any) {
   const { data: passwordResetRequestsData = [] } = useGetResetRequestsQuery(
     undefined,
     {
-      pollingInterval: 600000,
+      pollingInterval: 0,
       skip: role === "client",
     },
   );

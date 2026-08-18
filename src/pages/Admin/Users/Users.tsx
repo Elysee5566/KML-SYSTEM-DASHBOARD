@@ -25,7 +25,7 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [confirmDelete, setConfirmDelete] = useState<any>(null);
   const [grid, setGrid] = useState(false);
-  // console.log(users);
+  console.log(users);
   // const filteredUsers = users.filter((u: any) => {
   //   const matchesSearch = `${u.username} ${u.email} ${u.role}`
   //     .toLowerCase()
@@ -253,6 +253,7 @@ export default function UsersPage() {
               <thead className="bg-gray-50 text-left text-sm text-gray-600">
                 <tr>
                   <th className="p-4">Username</th>
+                  <th>Full Names</th>
                   <th>Email</th>
                   <th>Role</th>
                   <th>2FA Enabled</th>
@@ -263,13 +264,13 @@ export default function UsersPage() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5} className="text-center p-8">
+                    <td colSpan={6} className="text-center p-8">
                       Loading users...
                     </td>
                   </tr>
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center p-8 text-gray-400">
+                    <td colSpan={6} className="text-center p-8 text-gray-400">
                       No users found
                     </td>
                   </tr>
@@ -280,6 +281,9 @@ export default function UsersPage() {
                       className="border-t text-sm text-gray-700 border-gray-200 hover:bg-slate-50 transition-colors"
                     >
                       <td className="p-4 font-medium">{u.username}</td>
+                      <td className="p-4 font-medium">
+                        {u?.full_name || u?.client?.names || "N/A"}
+                      </td>
 
                       <td>{u.email}</td>
 

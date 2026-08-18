@@ -31,7 +31,6 @@ export default function LoanDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex">
-
       {/* BACKDROP */}
       <div
         onClick={onClose}
@@ -46,7 +45,6 @@ export default function LoanDrawer({
           open ? "translate-x-0" : "translate-x-full"
         } flex flex-col`}
       >
-
         {/* HEADER */}
         <div className="flex justify-between items-center p-5 border-b">
           <div>
@@ -61,7 +59,6 @@ export default function LoanDrawer({
 
         {/* CONTENT */}
         <div className="p-5 space-y-5 overflow-y-auto text-sm">
-
           {/* 👤 CLIENT */}
           <div>
             <p className="text-xs text-gray-400">Client</p>
@@ -116,9 +113,7 @@ export default function LoanDrawer({
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-400">
-                No payments yet
-              </p>
+              <p className="text-xs text-gray-400">No payments yet</p>
             )}
           </div>
 
@@ -135,14 +130,11 @@ export default function LoanDrawer({
           {/* 💰 PAYMENT FORM */}
           {showPayment && (
             <div className="pt-4 border-t space-y-4 animate-fade-in">
-
               <p className="font-medium">Record Payment</p>
 
               {/* QUICK FULL */}
               <button
-                onClick={() =>
-                  setAmount(String(loan.remaining_balance))
-                }
+                onClick={() => setAmount(String(loan.remaining_balance))}
                 className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded"
               >
                 Pay Full Balance (RWF {loan.remaining_balance})
@@ -162,7 +154,6 @@ export default function LoanDrawer({
               <input
                 type="file"
                 accept="image/*,.pdf"
-                required
                 onChange={(e: any) => setFile(e.target.files[0])}
                 className="w-full text-sm border rounded-lg p-2 border-gray-400 bg-gray-200"
               />
@@ -173,8 +164,7 @@ export default function LoanDrawer({
                 <span className="font-semibold text-red-600">
                   RWF{" "}
                   {amount
-                    ? Number(loan.remaining_balance) -
-                      Number(amount)
+                    ? Number(loan.remaining_balance) - Number(amount)
                     : loan.remaining_balance}
                 </span>
               </div>
@@ -193,16 +183,12 @@ export default function LoanDrawer({
 
                   onPay(formData);
                 }}
-                disabled={!amount || !file || isLoadingPayment}
+                disabled={!amount || isLoadingPayment}
                 className={`w-full text-white py-2 rounded-lg ${
-                  isLoadingPayment
-                    ? "bg-gray-400"
-                    : "bg-green-600"
+                  isLoadingPayment ? "bg-gray-400" : "bg-green-600"
                 }`}
               >
-                {isLoadingPayment
-                  ? "Processing..."
-                  : "Confirm Payment"}
+                {isLoadingPayment ? "Processing..." : "Confirm Payment"}
               </button>
 
               <button

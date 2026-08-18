@@ -17,7 +17,7 @@ import { useCancelPaymentMutation } from "../../api/paymentApi";
 import { Loader } from "lucide-react";
 const PaymentPage = () => {
   const [page, setPage] = useState(1);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("");
   const { data, isLoading, isError } = useGetPaymentsQuery<any>({
     page,
     page_size: 100,
@@ -52,7 +52,7 @@ const PaymentPage = () => {
   const activeLoans = Array.isArray(loansData)
     ? loansData
     : loansData?.results || [];
-
+  console.log("payment data", data);
   // const activeLoans = loans.filter(
   //   (l: any) =>
   //     Number(l.remaining_balance) > 0 &&
@@ -360,22 +360,48 @@ const PaymentPage = () => {
       {/* ===================== */}
       {/* SUMMARY */}
       {/* ===================== */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-xl shadow">
-          <p>Total Paid</p>
+      <div className="grid md:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-xl shadow border border-gray-400">
+          <p className="text-gray-500 font-bold">Total Paid</p>
           <h2 className="text-xl font-bold">
             {formatAmount(data?.summary?.total_paid || 0)}
           </h2>
         </div>
 
-        <div className="bg-yellow-50 p-4 rounded-xl">
-          Pending: {data?.summary?.pending_count || 0}
-        </div>
+        <button
+          onClick={() => {
+            (setFilter("pending"), setPage(1));
+          }}
+          className="bg-yellow-50 shadow border border-gray-400 p-4 rounded-xl"
+        >
+          <p className="text-gray-500 font-bold">Pending:</p>
+          <h2 className="text-xl font-bold">
+            {data?.summary?.pending_count || 0}
+          </h2>
+        </button>
 
-        <div className="bg-green-50 p-4 rounded-xl">
-          Approved:
-          {data?.summary?.approved_count || 0}
-        </div>
+        <button
+          onClick={() => {
+            (setFilter("approved"), setPage(1));
+          }}
+          className="bg-green-50 shadow border border-gray-400 p-4 rounded-xl"
+        >
+          <p className="text-gray-500 font-bold">Approved:</p>
+          <h2 className="text-xl font-bold">
+            {data?.summary?.approved_count || 0}
+          </h2>
+        </button>
+        <button
+          onClick={() => {
+            (setFilter("rejected"), setPage(1));
+          }}
+          className="bg-red-50 shadow border border-gray-400 p-4 rounded-xl"
+        >
+          <p className="text-gray-500 font-bold">Rejected:</p>
+          <h2 className="text-xl font-bold">
+            {data?.summary?.rejected_count || 0}
+          </h2>
+        </button>
       </div>
       <div className="flex flex-row items-center gap-x-4">
         <h2>Layout</h2>
@@ -456,7 +482,11 @@ const PaymentPage = () => {
       )}
 
       {data?.results.length === 0 && (
-        <p className="text-center text-gray-500">No payments found</p>
+        <p className="text-center capitalize text-gray-500">
+          {filter != "all"
+            ? `No ${filter} Payments found`
+            : `No payments found`}
+        </p>
       )}
       {/* ===================== */}
       {/* 📱 MOBILE CARDS */}
@@ -483,7 +513,7 @@ const PaymentPage = () => {
                   {p.status}
                 </span>
               </div>
-
+              <p className="text-sm font-medium">{p.loan.client.names}</p>
               <p className="text-sm font-medium">
                 {formatAmount(p.amount_paid)}
               </p>
@@ -518,13 +548,15 @@ const PaymentPage = () => {
       {/* ===================== */}
       {/* 🖥️ DESKTOP TABLE */}
       {/* ===================== */}
-      {!grid && (
+      {data?.results.length > 0 && !grid && (
         <div className="w-[85vw] md:w-full bg-white text-gray-600 font-medium rounded-2xl shadow overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-left">
               <tr>
                 <th className="p-3">Loan</th>
+                <th className="p-3">Names</th>
                 <th className="p-3">Amount</th>
+
                 <th className="p-3">Proof</th>
                 {/* <th className="p-3">Name of Paid number</th> */}
                 <th className="p-3">Date</th>
@@ -540,9 +572,11 @@ const PaymentPage = () => {
                   className="border-t border-gray-200 hover:bg-gray-50"
                 >
                   <td className="p-3">#{p.loan?.id || p.loan}</td>
+                  <td className="p-3 font-semibold">{p.loan.client.names}</td>
                   <td className="p-3 font-semibold">
                     {formatAmount(p.amount_paid)}
                   </td>
+
                   <td className="p-3">
                     {p.payment_proof ? (
                       <a
@@ -641,28 +675,30 @@ const PaymentPage = () => {
           </table>
         </div>
       )}
-      <div className="flex justify-between items-center mt-6">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage((p) => p - 1)}
-          className="px-4 py-2 border rounded disabled:opacity-50"
-        >
-          Previous
-        </button>
+      {data?.results.length > 0 && (
+        <div className="flex justify-between items-center mt-6">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="px-4 py-2 border rounded disabled:opacity-50"
+          >
+            Previous
+          </button>
 
-        <span>
-          Page {page} of{" "}
-          {data?.total_pages || Math.ceil(payments.length / 100) || 1}
-        </span>
+          <span>
+            Page {page} of{" "}
+            {data?.total_pages || Math.ceil(payments.length / 100) || 1}
+          </span>
 
-        <button
-          disabled={page === data?.total_pages}
-          onClick={() => setPage((p) => p + 1)}
-          className="px-4 py-2 border rounded disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+          <button
+            disabled={page === data?.total_pages}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-4 py-2 border rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
       <ViewPaymentDrawer
         payment={viewingPayment}
         onClose={() => setViewingPayment(null)}

@@ -35,6 +35,8 @@ export default function Loans() {
     to_date: toDate,
   });
   const loans = loansData?.results || [];
+  console.log(loansData);
+
   const totalPages = loansData?.total_pages || 1;
   // const currentPage = loansData?.current_page || 1;
   console.log("Loans:", loans);
@@ -227,7 +229,7 @@ function StatsCards({ stats }: any) {
     },
     {
       title: "Outstanding Balance",
-      value: formatCompactNumber(formatCurrency(stats?.total_balance)),
+      value: formatCurrency(stats?.total_balance),
       bg: "bg-red-50",
       text: "text-red-600",
     },

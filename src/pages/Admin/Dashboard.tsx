@@ -182,19 +182,17 @@ export default function Dashboard() {
     Object.entries(filters).filter(([_, v]) => v),
   );
 
-  const { data, isLoading, isError, error } = useGetDashboardQuery(
-    cleanFilters,
-    {
-      pollingInterval: 60000,
-    },
-  );
-  console.log("Dashboard data", data);
-  console.log(isError, error);
+  const { data, isLoading } = useGetDashboardQuery(cleanFilters, {
+    pollingInterval: 0,
+  });
+  // console.log("Dashboard data", data);
+  // console.log(isError, error);
 
   const role = data?.role || "client";
   const kpis = data?.kpis || {};
   const charts = data?.charts || {};
   const tables = data?.tables || {};
+  console.log(kpis);
 
   const progress = charts.payment_progress || {
     paid: 0,
