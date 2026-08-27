@@ -37,8 +37,11 @@ const PaymentPage = () => {
   const [reviewPayment] = useReviewPaymentMutation();
   const [cancelPayment, { isLoading: isCancellingPayment }] =
     useCancelPaymentMutation();
-  const { data: loansData, isLoading: isActiveLoansLoading } =
-    useGetActiveLoansQuery();
+  const {
+    data: loansData,
+    isLoading: isActiveLoansLoading,
+    refetch,
+  } = useGetActiveLoansQuery();
   const [grid, setGrid] = useState(false);
 
   const [form, setForm] = useState({
@@ -81,6 +84,7 @@ const PaymentPage = () => {
 
     try {
       await createPayment(formData).unwrap();
+
       toast.success("Payment submitted");
 
       setForm({
@@ -98,6 +102,7 @@ const PaymentPage = () => {
     try {
       loaderService.show();
       await reviewPayment({ id, action }).unwrap();
+      refetch();
       loaderService.hide();
       toast.success(`Payment ${action}d`);
     } catch (err: any) {
@@ -140,6 +145,7 @@ const PaymentPage = () => {
     try {
       loaderService.show();
       await cancelPayment({ id }).unwrap();
+      refetch();
       toast.success("Payment cancelled");
       loaderService.hide();
     } catch {
@@ -170,6 +176,7 @@ const PaymentPage = () => {
         id: editingPayment.id,
         formData,
       }).unwrap();
+      refetch();
       loaderService.hide();
       toast.success("Payment updated successfully");
 

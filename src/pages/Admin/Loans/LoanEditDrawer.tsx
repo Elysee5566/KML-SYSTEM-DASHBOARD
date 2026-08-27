@@ -81,7 +81,7 @@ export default function EditLoanDrawer({
           </Field>
           {/* INTEREST */}
 
-          <Field label="Penalty Amount">
+          <Field label="Interest For Late Payment">
             <input
               type="number"
               value={form.penalty_amount || 0}

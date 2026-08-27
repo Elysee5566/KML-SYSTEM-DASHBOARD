@@ -71,11 +71,13 @@ export default function ApplyLoan() {
       }).unwrap();
       toast.success("Application submitted");
     } catch (err: any) {
-      // console.log(err.data[0]);
+      console.log(err);
       if (err?.data?.non_field_errors) {
         toast.error(
           err?.data?.non_field_errors[0] || err?.data[0] || err?.data,
         );
+      } else if (err.data.detail) {
+        toast.error(err.data.detail);
       } else if (err?.data) {
         toast.error(err?.data[0]);
       } else {

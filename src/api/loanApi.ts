@@ -2,6 +2,7 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithAuth } from "../features/baseQueryApi";
 
 
+
 export interface LoanType {
   id: number;
   name: string;
@@ -109,6 +110,13 @@ export const loanTypeApi = createApi({
 
       invalidatesTags: ["Loans"], // 👈 important for refresh
     }),
+    deleteLoan: builder.mutation({
+      query: (id) => ({
+        url: `/loans/loans/${id}/`,
+        method: "DELETE"
+      }),
+      invalidatesTags: ["Loans"]
+    })
 
   }),
 
@@ -124,4 +132,5 @@ export const {
   useGetActiveLoansQuery,
   useUpdateLoanMutation,
   useCreateLoanMutation,
+  useDeleteLoanMutation
 } = loanTypeApi;

@@ -1,17 +1,22 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../app/store";
 
 export default function LoanDrawer({
   loan,
   open,
   onClose,
   onPay,
+  onDelete,
   isLoadingPayment,
+  isDeletingLoan,
 }: any) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [amount, setAmount] = useState("");
   const [file, setFile] = useState<File | null>(null);
-
+  const { role } = useSelector((state: RootState) => state.auth);
   // 💰 remaining balance
   // const remainingAfterPayment = useMemo(() => {
   //   if (!loan || !amount) return loan?.remaining_balance;
@@ -23,6 +28,7 @@ export default function LoanDrawer({
     if (!open) {
       setShowPayment(false);
       setAmount("");
+      setShowDeleteConfirm(false);
       setFile(null);
     }
   }, [open]);
@@ -84,13 +90,56 @@ export default function LoanDrawer({
             <Info label="Due Date" value={loan.repayment_due_date} />
             {loan.penalty_amount > 0 && (
               <Info
-                label="Penalty"
+                label="Interest for Late Payment"
                 value={`RWF ${loan.penalty_amount}`}
                 highlight
               />
             )}
           </div>
+          {/* DELETE LOAN */}
+          {role === "admin" && (
+            <div className="pt-5 mt-5 border-t">
+              {!showDeleteConfirm ? (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full border border-red-200 text-red-600 py-2 rounded-lg hover:bg-red-50"
+                >
+                  Delete Loan
+                </button>
+              ) : (
+                <div className="space-y-3 bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div>
+                    <p className="font-medium text-red-700">
+                      Delete this loan?
+                    </p>
 
+                    <p className="text-xs text-red-600 mt-1">
+                      This action cannot be undone. The loan and its related
+                      data may be permanently removed.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowDeleteConfirm(false)}
+                      disabled={isDeletingLoan}
+                      className="flex-1 border border-gray-300 text-gray-600 py-2 rounded-lg"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      onClick={() => onDelete(loan.id)}
+                      disabled={isDeletingLoan}
+                      className="flex-1 bg-red-600 text-white py-2 rounded-lg"
+                    >
+                      {isDeletingLoan ? "Deleting..." : "Yes, Delete"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {/* 💳 PAYMENTS */}
           <div className="pt-4 border-t">
             <p className="font-medium mb-2">Payments</p>

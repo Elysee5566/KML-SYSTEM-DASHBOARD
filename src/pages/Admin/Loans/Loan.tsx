@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { useGetLoansQuery, useUpdateLoanMutation } from "../../../api/loanApi";
+import {
+  useGetLoansQuery,
+  useUpdateLoanMutation,
+  useDeleteLoanMutation,
+} from "../../../api/loanApi";
 import LoanCards from "./LoanCard";
 import LoanTable from "./LoanTable";
 import LoanDrawer from "./LoanDrawer";
@@ -42,7 +46,7 @@ export default function Loans() {
   console.log("Loans:", loans);
   // const totalPages = Math.ceil(totalCount / 10);
   const [updateLoan, { isLoading: isUpdating }] = useUpdateLoanMutation();
-
+  const [deleteLoan, { isLoading: isDeleting }] = useDeleteLoanMutation();
   useEffect(() => {
     refetch();
   }, []);
@@ -66,6 +70,36 @@ export default function Loans() {
   const handleClose = () => {
     // setOpenDrawer(false);
     setSelectedLoan(null);
+  };
+  const handleDeleteLoan = async (loanId: number) => {
+    try {
+      if (
+        confirm(
+          "⚠️⚠️⚠️ Are u sure You to delete this Loan? This Action is Irreversible!!!! ⚠️⚠️⚠️",
+        )
+      ) {
+        await deleteLoan(loanId).unwrap();
+        setSelectedLoan(null);
+        refetch();
+        toast.success("Loan Deleted Successfully");
+      } else {
+        toast.info("Loan Deleted Action Cancelled.");
+      }
+      // refresh loans if necessary
+    } catch (err: any) {
+      console.log(err);
+      if (err?.data?.non_field_errors) {
+        toast.error(
+          err?.data?.non_field_errors[0] || err?.data[0] || err?.data,
+        );
+      } else if (err.data.detail) {
+        toast.error(err.data.detail);
+      } else if (err?.data) {
+        toast.error(err?.data[0]);
+      } else {
+        toast.error("Failed to apply for Loan");
+      }
+    }
   };
 
   // 👉 submit payment
@@ -183,6 +217,8 @@ export default function Loans() {
         onClose={() => setSelectedLoan(null)}
         onPay={handleSubmitPayment}
         isLoadingPayment={isCreatingPayment}
+        onDelete={handleDeleteLoan}
+        isDeletingLoan={isDeleting}
       />
       <CreateLoanDrawer
         open={openCreate}
