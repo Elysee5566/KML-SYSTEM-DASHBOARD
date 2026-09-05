@@ -7,7 +7,7 @@ import {
   useRejectPublicApplicationMutation,
 } from "../../api/loanapplication";
 import { toast } from "react-toastify";
-import { url } from "../../url";
+// import { url } from "../../url";
 import { loaderService } from "../../components/Loaders/loaderService";
 import {
   FaUser,
@@ -187,38 +187,38 @@ export default function PublicApplicationsDashboard() {
       </span>
     );
   };
-  const openFile = async (type: string) => {
-    if (!selectedApp) return;
+  // const openFile = async (type: string) => {
+  //   if (!selectedApp) return;
 
-    try {
-      const token =
-        localStorage.getItem("access") || sessionStorage.getItem("access");
-      if (!token)
-        return toast.error("You are not authorized. Please login again.");
+  //   try {
+  //     const token =
+  //       localStorage.getItem("access") || sessionStorage.getItem("access");
+  //     if (!token)
+  //       return toast.error("You are not authorized. Please login again.");
 
-      const response = await fetch(
-        `${url}/api/loans/admin/public-applications/${selectedApp.id}/view-file?type=${type}`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      if (!response.ok)
-        throw new Error(
-          `Failed to fetch file,seems like no ${type} was uploaded`,
-        );
-      const blob = await response.blob();
-      // console.log(blob);
-      const fileType = blob.type || "application/octet-stream";
+  //     const response = await fetch(
+  //       `${url}/api/loans/admin/public-applications/${selectedApp.id}/view-file?type=${type}`,
+  //       { headers: { Authorization: `Bearer ${token}` } },
+  //     );
+  //     if (!response.ok)
+  //       throw new Error(
+  //         `Failed to fetch file,seems like no ${type} was uploaded`,
+  //       );
+  //     const blob = await response.blob();
+  //     // console.log(blob);
+  //     const fileType = blob.type || "application/octet-stream";
 
-      const fileURL = URL.createObjectURL(new Blob([blob], { type: fileType }));
-      if (fileURL) {
-        setPreviewFile({ url: fileURL, name: type });
-      } else {
-        toast.error("Failed to open file,no file uploaded");
-      }
-    } catch (err) {
-      // console.error(err);
-      toast.error(`Failed to open file, seems like no ${type} was uploaded`);
-    }
-  };
+  //     const fileURL = URL.createObjectURL(new Blob([blob], { type: fileType }));
+  //     if (fileURL) {
+  //       setPreviewFile({ url: fileURL, name: type });
+  //     } else {
+  //       toast.error("Failed to open file,no file uploaded");
+  //     }
+  //   } catch (err) {
+  //     // console.error(err);
+  //     toast.error(`Failed to open file, seems like no ${type} was uploaded`);
+  //   }
+  // };
 
   // =========================
   // DRAWER (FULL DETAILS)
@@ -369,25 +369,52 @@ export default function PublicApplicationsDashboard() {
           </div>
 
           {/* DOCUMENTS */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <button
-              onClick={() => openFile("id")}
-              className="flex items-center justify-center gap-2 bg-blue-100 text-blue-700 p-2 rounded shadow hover:bg-blue-200 transition"
-            >
-              <FaFilePdf /> View ID
-            </button>
-            <button
-              onClick={() => openFile("contract")}
-              className="flex items-center justify-center gap-2 bg-yellow-100 text-yellow-700 p-2 rounded shadow hover:bg-yellow-200 transition"
-            >
-              <FaFilePdf /> Job Contract
-            </button>
-            <button
-              onClick={() => openFile("bank")}
-              className="flex items-center justify-center gap-2 bg-purple-100 text-purple-700 p-2 rounded shadow hover:bg-purple-200 transition"
-            >
-              <FaFilePdf /> Bank Statement
-            </button>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-2">
+            {selectedApp?.id_document ? (
+              <a
+                href={selectedApp.id_document}
+                target="_blank"
+                rel="noopener noreferrer"
+                // onClick={() => openFile("id")}
+                className="flex items-center justify-center gap-2 bg-blue-100 text-blue-700 p-2 rounded shadow hover:bg-blue-200 transition"
+              >
+                <FaFilePdf /> View ID
+              </a>
+            ) : (
+              <p className="text-gray-500 font-bold text-sm">
+                No Id Document Provided
+              </p>
+            )}
+            {selectedApp?.job_contract ? (
+              <a
+                href={selectedApp.job_contract}
+                target="_blank"
+                rel="noopener noreferrer"
+                // onClick={() => openFile("contract")}
+                className="flex items-center justify-center gap-2 bg-yellow-100 text-yellow-700 p-2 rounded shadow hover:bg-yellow-200 transition"
+              >
+                <FaFilePdf /> Job Contract
+              </a>
+            ) : (
+              <p className="text-gray-500 font-bold text-sm">
+                No Contract Document Provided
+              </p>
+            )}
+            {selectedApp?.bank_statement ? (
+              <a
+                href={selectedApp.bank_statement}
+                target="_blank"
+                rel="noopener noreferrer"
+                // onClick={() => openFile("bank")}
+                className="flex items-center justify-center gap-2 bg-purple-100 text-purple-700 p-2 rounded shadow hover:bg-purple-200 transition"
+              >
+                <FaFilePdf /> Bank Statement
+              </a>
+            ) : (
+              <p className="text-gray-500 font-bold text-sm">
+                No Bank Statement Provided
+              </p>
+            )}
           </div>
 
           {/* ACTIONS */}

@@ -191,6 +191,8 @@ export default function SettingsPage() {
   const [updateSystemSettings] = useUpdateSystemSettingsMutation();
 
   const maintenance_mode = data?.loan_application_enabled;
+  const allow_sending_emails = data?.allow_sending_emails;
+  console.log("allow_sending_emails", data);
   const onToggle = async () => {
     loaderService.show();
     try {
@@ -200,8 +202,8 @@ export default function SettingsPage() {
 
       toast.success(
         !maintenance_mode
-          ? "Loan applications disabled"
-          : "Loan applications enabled",
+          ? "Loan applications enabled"
+          : "Loan applications disabled",
       );
 
       refetch();
@@ -213,39 +215,106 @@ export default function SettingsPage() {
     }
   };
 
+  const onEmailToggle = async () => {
+    loaderService.show();
+
+    try {
+      await updateSystemSettings({
+        allow_sending_emails: !allow_sending_emails,
+      }).unwrap();
+
+      toast.success(
+        !allow_sending_emails
+          ? "Email sending enabled"
+          : "Email sending disabled",
+      );
+
+      refetch();
+    } catch (err) {
+      console.log(err);
+      toast.error("Failed to update email settings");
+    } finally {
+      loaderService.hide();
+    }
+  };
+
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6">
       {/* HEADER */}
-      <div className="flex flex-row items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold">Settings</h2>
-          <p className="text-gray-500 text-sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* TITLE */}
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-semibold">Settings</h2>
+
+          <p className="text-gray-500 text-sm mt-1">
             Manage your account and security preferences
           </p>
         </div>
-        <div className="flex flex-row items-center gap-x-2">
-          <span className="text-gray-400 font-bold text-sm">
-            Laon Applications
-          </span>
-          {role == "admin" && (
-            <button
-              onClick={onToggle}
-              className={`flex items-center gap-2 px-3 py-1 rounded-full border transition ${!maintenance_mode && "bg-red-600"}`}
-            >
-              {maintenance_mode ? (
-                <>
-                  <ToggleRightIcon className="text-gray-500 " />
-                  <span className="text-gray-500 text-sm">Enabled</span>
-                </>
-              ) : (
-                <>
-                  <ToggleLeftIcon className="text-white" />
-                  <span className="text-white text-sm">Disabled</span>
-                </>
-              )}
-            </button>
-          )}
-        </div>
+
+        {/* SYSTEM SETTINGS */}
+        {role === "admin" && (
+          <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3">
+            {/* LOAN APPLICATIONS */}
+            <div className="flex items-center justify-between sm:justify-start gap-3 rounded-xl border bg-white px-3 py-2">
+              <span className="text-gray-500 font-semibold text-xs sm:text-sm whitespace-nowrap">
+                Loan Applications
+              </span>
+
+              <button
+                onClick={onToggle}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition shrink-0 ${
+                  !maintenance_mode ? "bg-red-600" : "bg-gray-50"
+                }`}
+              >
+                {maintenance_mode ? (
+                  <>
+                    <ToggleRightIcon className="text-green-600" size={20} />
+                    <span className="text-gray-600 text-xs font-medium">
+                      Enabled
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <ToggleLeftIcon className="text-white" size={20} />
+                    <span className="text-white text-xs font-medium">
+                      Disabled
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* EMAILS */}
+            <div className="flex items-center justify-between sm:justify-start gap-3 rounded-xl border bg-white px-3 py-2">
+              <span className="text-gray-500 font-semibold text-xs sm:text-sm whitespace-nowrap">
+                Emails
+              </span>
+
+              <button
+                onClick={onEmailToggle}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition shrink-0 ${
+                  !allow_sending_emails ? "bg-red-600" : "bg-gray-50"
+                }`}
+              >
+                {allow_sending_emails ? (
+                  <>
+                    <ToggleRightIcon className="text-green-600" size={20} />
+                    <span className="text-gray-600 text-xs font-medium">
+                      Enabled
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <ToggleLeftIcon className="text-white" size={20} />
+                    <span className="text-white text-xs font-medium">
+                      Disabled
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ================= PROFILE ================= */}

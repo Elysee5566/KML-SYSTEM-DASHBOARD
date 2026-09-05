@@ -17,24 +17,25 @@ export default function Verify2FA() {
     try {
       setMethod("email");
       loaderService.show();
-      const res=await fetch(`${url}/api/users/2fa/send-email/`, {
+      const res = await fetch(`${url}/api/users/2fa/send-email/`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${tempToken}`,
         },
       });
       // console.log(res);
-      if(!res.ok){
-        throw new Error("Failed to send email code")
+      if (!res.ok) {
+        throw new Error("Failed to send email code");
       }
       loaderService.hide();
       toast.success("Code sent to your email");
-      
     } catch (error) {
       // console.error(error);
 
       loaderService.hide();
-      toast.error("Failed to send email code");
+      toast.error(
+        "Failed to send email code.Please use authenticator app or try again later",
+      );
     }
   };
 
@@ -65,7 +66,7 @@ export default function Verify2FA() {
       } else {
         toast.error("Invalid code");
       }
-    } catch(error: any) {
+    } catch (error: any) {
       // console.error(error);
       toast.error("Verification failed");
     } finally {
@@ -76,9 +77,7 @@ export default function Verify2FA() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#020617] px-4">
-
       <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-7 text-white">
-
         {/* HEADER */}
         <div className="text-center mb-6">
           <div className="flex justify-center mb-3">

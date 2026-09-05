@@ -50,15 +50,18 @@ export default function StaffLogin() {
 
   return (
     <div className="min-h-screen flex">
-
       {/* LEFT PANEL */}
       <div className="hidden lg:flex w-1/2 bg-white flex-col justify-between p-12 relative overflow-hidden">
-
         {/* subtle pattern */}
         <div className="absolute inset-0 opacity-10">
           <svg width="100%" height="100%">
             <defs>
-              <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
+              <pattern
+                id="dots"
+                width="20"
+                height="20"
+                patternUnits="userSpaceOnUse"
+              >
                 <circle cx="1" cy="1" r="1" fill="black" />
               </pattern>
             </defs>
@@ -85,17 +88,38 @@ export default function StaffLogin() {
           </h2>
 
           <p className="mt-4 text-gray-500 max-w-md">
-            Securely access the internal dashboard to monitor activity,
-            manage records, and keep operations running smoothly.
+            Securely access the internal dashboard to monitor activity, manage
+            records, and keep operations running smoothly.
           </p>
 
           {/* simple illustration */}
           <div className="mt-10">
             <svg viewBox="0 0 200 120" className="w-64">
-              <rect x="10" y="20" width="180" height="80" rx="10" fill="#0f2a52" />
+              <rect
+                x="10"
+                y="20"
+                width="180"
+                height="80"
+                rx="10"
+                fill="#0f2a52"
+              />
               <rect x="20" y="35" width="60" height="10" fill="white" />
-              <rect x="20" y="55" width="120" height="8" fill="white" opacity="0.6" />
-              <rect x="20" y="70" width="100" height="8" fill="white" opacity="0.4" />
+              <rect
+                x="20"
+                y="55"
+                width="120"
+                height="8"
+                fill="white"
+                opacity="0.6"
+              />
+              <rect
+                x="20"
+                y="70"
+                width="100"
+                height="8"
+                fill="white"
+                opacity="0.4"
+              />
             </svg>
           </div>
         </div>
@@ -108,7 +132,6 @@ export default function StaffLogin() {
 
       {/* RIGHT PANEL */}
       <div className="w-full lg:w-1/2 flex items-center justify-center bg-[#020617] px-6 relative overflow-hidden">
-
         {/* glow effects */}
         <div className="absolute w-[400px] h-[400px] bg-secondary/20 blur-[100px] rounded-full top-[-80px] left-[-80px]" />
         <div className="absolute w-[300px] h-[300px] bg-blue-500/20 blur-[80px] rounded-full bottom-[-80px] right-[-80px]" />
@@ -118,7 +141,6 @@ export default function StaffLogin() {
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md relative z-10"
         >
-
           {/* HEADER */}
           <div className="text-center mb-8 text-white">
             <div className="flex justify-center mb-4">
@@ -128,14 +150,11 @@ export default function StaffLogin() {
             </div>
 
             <h1 className="text-2xl font-bold">Staff Login</h1>
-            <p className="text-gray-400 text-sm">
-              Authorized access only
-            </p>
+            <p className="text-gray-400 text-sm">Authorized access only</p>
           </div>
 
           {/* CARD */}
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl p-6">
-
             {/* EMAIL */}
             <div className="relative mb-4">
               <User className="absolute left-3 top-3 text-gray-400" size={18} />
