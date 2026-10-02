@@ -29,6 +29,7 @@ export default function Loans() {
   const {
     data: loansData = [],
     isLoading,
+    isFetching,
     refetch,
   } = useGetLoansQuery({
     page,
@@ -39,11 +40,11 @@ export default function Loans() {
     to_date: toDate,
   });
   const loans = loansData?.results || [];
-  console.log(loansData);
+  // console.log(loansData);
 
   const totalPages = loansData?.total_pages || 1;
   // const currentPage = loansData?.current_page || 1;
-  console.log("Loans:", loans);
+  // console.log("Loans:", loans);
   // const totalPages = Math.ceil(totalCount / 10);
   const [updateLoan, { isLoading: isUpdating }] = useUpdateLoanMutation();
   const [deleteLoan, { isLoading: isDeleting }] = useDeleteLoanMutation();
@@ -87,7 +88,7 @@ export default function Loans() {
       }
       // refresh loans if necessary
     } catch (err: any) {
-      console.log(err);
+      // console.log(err);
       if (err?.data?.non_field_errors) {
         toast.error(
           err?.data?.non_field_errors[0] || err?.data[0] || err?.data,
@@ -198,6 +199,7 @@ export default function Loans() {
             totalPages={totalPages}
             onPageChange={setPage}
             search={search}
+            isLoading={isFetching}
             setSearch={setSearch}
             status={status}
             setStatus={setStatus}

@@ -1,4 +1,3 @@
-// import { useState, useMemo } from "react";
 import { FaEdit, FaFileExcel } from "react-icons/fa";
 import { FiEye, FiSearch } from "react-icons/fi";
 import { useSelector } from "react-redux";
@@ -27,11 +26,13 @@ export default function LoanTable({
   fromDate,
   setFromDate,
 
+  isLoading,
   toDate,
   setToDate,
 }: any) {
   const { role } = useSelector((state: RootState) => state.auth);
 
+  // console.log("loans", loans);
   // 💰 format currency (RWF)
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-RW", {
@@ -118,6 +119,62 @@ export default function LoanTable({
       </span>
     );
   }
+  const LoanTableSkeleton = () => {
+    return (
+      <>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <tr key={index} className="border-t">
+            <td className="p-4">
+              <div className="h-4 w-10 bg-gray-200 rounded animate-pulse" />
+            </td>
+
+            <td className="p-4">
+              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+            </td>
+
+            <td className="p-4">
+              <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+            </td>
+
+            <td className="p-4">
+              <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+            </td>
+
+            <td className="p-4">
+              <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+            </td>
+
+            <td className="p-4">
+              <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+            </td>
+
+            <td className="p-4">
+              <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+            </td>
+
+            <td className="p-4">
+              <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
+            </td>
+
+            <td className="p-4">
+              <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
+            </td>
+
+            <td className="p-4">
+              <div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse" />
+            </td>
+
+            <td className="p-4">
+              <div className="flex justify-end gap-2">
+                <div className="h-9 w-20 bg-gray-200 rounded-lg animate-pulse" />
+                <div className="h-9 w-20 bg-gray-200 rounded-lg animate-pulse" />
+              </div>
+            </td>
+          </tr>
+        ))}
+      </>
+    );
+  };
 
   return (
     <div className="bg-white w-full flex flex-col rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -130,7 +187,9 @@ export default function LoanTable({
             className="w-full outline-none text-sm"
             placeholder="Search by client, loan type, or ID..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+            }}
           />
         </div>
 
@@ -210,6 +269,9 @@ export default function LoanTable({
                 <th className="p-4 text-left whitespace-nowrap">Interest</th>
                 <th className="p-4 text-left whitespace-nowrap">Total</th>
                 <th className="p-4 text-left whitespace-nowrap">Remaining</th>
+                <th className="p-4 text-left whitespace-nowrap">
+                  Disbursement Date
+                </th>
                 <th className="p-4 text-left whitespace-nowrap">Due Date</th>
                 <th className="p-4 text-left whitespace-nowrap">Status</th>
 
@@ -220,11 +282,15 @@ export default function LoanTable({
             </thead>
 
             <tbody>
-              {loans.length > 0 ? (
+              {isLoading ? (
+                <LoanTableSkeleton />
+              ) : loans.length > 0 ? (
                 loans.map((loan: any) => (
                   <tr
                     key={loan.id}
-                    className={`border-t hover:bg-gray-50 transition ${loan.status == "reported" && "bg-red-50"} ${loan.status == "to_be_reported" && "bg-amber-500"}`}
+                    className={`border-t hover:bg-gray-50 transition ${
+                      loan.status === "reported" ? "bg-red-50" : ""
+                    } ${loan.status === "to_be_reported" ? "bg-amber-50" : ""}`}
                   >
                     <td className="p-4 font-medium text-gray-600 whitespace-nowrap">
                       #{loan.id}
@@ -255,6 +321,10 @@ export default function LoanTable({
                     </td>
 
                     <td className="p-4 text-gray-500 whitespace-nowrap">
+                      {formatDate(loan.disbursement_date)}
+                    </td>
+
+                    <td className="p-4 text-gray-500 whitespace-nowrap">
                       {formatDate(loan.repayment_due_date)}
                     </td>
 
@@ -262,24 +332,22 @@ export default function LoanTable({
                       <StatusBadge status={loan.status} />
                     </td>
 
-                    <td
-                      className={` p-4 text-right whitespace-nowrap ${loan.status == "reported" && "bg-red-50"} ${loan.status == "to_be_reported" && "bg-amber-500"}`}
-                    >
-                      <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                    <td className="p-4 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => onSelect(loan)}
                           className="
-                    bg-green-600
-                    hover:bg-green-700
-                    text-white
-                    px-3
-                    py-2
-                    rounded-lg
-                    flex
-                    items-center
-                    gap-2
-                    transition
-                  "
+                bg-green-600
+                hover:bg-green-700
+                text-white
+                px-3
+                py-2
+                rounded-lg
+                flex
+                items-center
+                gap-2
+                transition
+              "
                         >
                           <FiEye />
                           <span className="font-medium">View</span>
@@ -289,17 +357,17 @@ export default function LoanTable({
                           <button
                             onClick={() => onEdit(loan)}
                             className="
-                      bg-blue-600
-                      hover:bg-blue-700
-                      text-white
-                      px-3
-                      py-2
-                      rounded-lg
-                      flex
-                      items-center
-                      gap-2
-                      transition
-                    "
+                  bg-blue-600
+                  hover:bg-blue-700
+                  text-white
+                  px-3
+                  py-2
+                  rounded-lg
+                  flex
+                  items-center
+                  gap-2
+                  transition
+                "
                           >
                             <FaEdit />
                             <span className="font-medium">Edit</span>
@@ -312,7 +380,7 @@ export default function LoanTable({
               ) : (
                 <tr>
                   <td
-                    colSpan={10}
+                    colSpan={11}
                     className="p-8 text-center text-sm text-gray-400"
                   >
                     No loans found
