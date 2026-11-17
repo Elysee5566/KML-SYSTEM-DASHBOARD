@@ -20,11 +20,12 @@ export default function EditLoanDrawer({
         repayment_due_date: loan.repayment_due_date,
         penalty_amount: loan.penalty_amount,
         status: loan.status,
+        remaining_amount: loan.remaining_amount,
         contract: null,
       });
     }
   }, [loan]);
-
+  console.log(loan);
   if (!open || !loan) return null;
 
   return (
@@ -99,7 +100,18 @@ export default function EditLoanDrawer({
               will not automatically adjust interest!!.
             </p>
           )}
-
+          {/* Remaining Amount */}
+          <Field label="Remaining Amount">
+            <input
+              type="number"
+              value={form.remaining_amount || 0}
+              //   disabled={hasPayments}
+              onChange={(e) =>
+                setForm({ ...form, remaining_amount: e.target.value })
+              }
+              className="input"
+            />
+          </Field>
           {/* DUE DATE */}
           <Field label="Repayment Due Date">
             <input

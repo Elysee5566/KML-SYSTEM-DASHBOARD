@@ -1,5 +1,5 @@
 import { FaEdit, FaFileExcel } from "react-icons/fa";
-import { FiEye, FiSearch } from "react-icons/fi";
+import { FiEye, FiSearch, FiTrash2 } from "react-icons/fi";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
 import { formatCompactNumber } from "../../../components/formatCompactNumber";
@@ -7,6 +7,8 @@ import { toast } from "react-toastify";
 // import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { url } from "../../../url";
+import { useEffect, useState } from "react";
+import { useDeleteLoanMutation } from "../../../api/loanApi";
 // import { RedoDotIcon } from "lucide-react";
 
 export default function LoanTable({
@@ -31,7 +33,73 @@ export default function LoanTable({
   setToDate,
 }: any) {
   const { role } = useSelector((state: RootState) => state.auth);
+  const [selectedLoanIds, setSelectedLoanIds] = useState<number[]>([]);
+  const [deleteLoan, { isLoading: isDeleting }] = useDeleteLoanMutation();
 
+  const toggleLoanSelection = (id: number) => {
+    setSelectedLoanIds((previous) =>
+      previous.includes(id)
+        ? previous.filter((loanId) => loanId !== id)
+        : [...previous, id],
+    );
+  };
+
+  const allLoansSelected =
+    loans.length > 0 &&
+    loans.every((loan: any) => selectedLoanIds.includes(loan.id));
+
+  const toggleSelectAll = () => {
+    setSelectedLoanIds((previous) => {
+      const currentPageIds = loans.map((loan: any) => loan.id);
+
+      if (allLoansSelected) {
+        return previous.filter((id) => !currentPageIds.includes(id));
+      }
+
+      return [...new Set([...previous, ...currentPageIds])];
+    });
+  };
+
+  useEffect(() => {
+    setSelectedLoanIds([]);
+  }, [page, search, status, fromDate, toDate]);
+  const handleBulkDelete = async () => {
+    if (role !== "admin" || selectedLoanIds.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${selectedLoanIds.length} selected loans?`,
+    );
+
+    if (!confirmed) return;
+
+    const results = await Promise.allSettled(
+      selectedLoanIds.map((id) => deleteLoan(id).unwrap()),
+    );
+
+    const succeeded = results.filter(
+      (result) => result.status === "fulfilled",
+    ).length;
+
+    const failed = results.length - succeeded;
+
+    if (succeeded > 0) {
+      toast.success(`${succeeded} loan(s) deleted successfully.`);
+    }
+
+    if (failed > 0) {
+      toast.error(`${failed} loan(s) could not be deleted.`);
+    }
+
+    setSelectedLoanIds(
+      results.flatMap((result, index) =>
+        result.status === "rejected" ? [selectedLoanIds[index]] : [],
+      ),
+    );
+  };
+  // Clear selections when the page or filters change.
+  useEffect(() => {
+    setSelectedLoanIds([]);
+  }, [page, search, status, fromDate, toDate]);
   // console.log("loans", loans);
   // 💰 format currency (RWF)
   const formatCurrency = (value: number) =>
@@ -177,9 +245,9 @@ export default function LoanTable({
   };
 
   return (
-    <div className="bg-white w-full flex flex-col rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white w-full flex flex-col rounded-2xl border border-slate-200 shadow-sm overflow-x-scroll">
       {/* 🔍 Search + Filter */}
-      <div className="p-4 flex flex-col xl:flex-row gap-4 justify-between border-b">
+      <div className="p-4 flex flex-col xl:flex-row gap-4 w-full justify-between border-b">
         <div className="flex items-center gap-2 border rounded-lg px-3 py-2 w-full xl:max-w-md">
           <FiSearch className="text-gray-400 shrink-0" />
 
@@ -225,9 +293,10 @@ export default function LoanTable({
               <option value="reported">Reported</option>
             </select>
             {(role === "admin" || role === "manager") && (
-              <button
-                onClick={handleExport}
-                className="
+              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                <button
+                  onClick={handleExport}
+                  className="
             bg-emerald-600
             text-white
             px-4
@@ -242,10 +311,22 @@ export default function LoanTable({
             w-full
             sm:w-auto
           "
-              >
-                <FaFileExcel />
-                Export
-              </button>
+                >
+                  <FaFileExcel />
+                  Export
+                </button>
+
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={isDeleting}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2
+      rounded-lg flex items-center justify-center gap-2 w-full
+      disabled:opacity-50 transition"
+                >
+                  <FiTrash2 />
+                  {isDeleting ? "Deleting..." : ` (${selectedLoanIds.length})`}
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -262,6 +343,17 @@ export default function LoanTable({
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-xs uppercase text-gray-500">
               <tr>
+                {role === "admin" && (
+                  <th className="p-4">
+                    <input
+                      type="checkbox"
+                      checked={allLoansSelected}
+                      onChange={toggleSelectAll}
+                      aria-label="Select all loans on this page"
+                      className="h-4 w-4 accent-red-600 cursor-pointer"
+                    />
+                  </th>
+                )}
                 <th className="p-4 text-left whitespace-nowrap">#</th>
                 <th className="p-4 text-left whitespace-nowrap">Client</th>
                 <th className="p-4 text-left whitespace-nowrap">Loan Type</th>
@@ -292,6 +384,17 @@ export default function LoanTable({
                       loan.status === "reported" ? "bg-red-50" : ""
                     } ${loan.status === "to_be_reported" ? "bg-amber-50" : ""}`}
                   >
+                    {role === "admin" && (
+                      <td className="p-4 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedLoanIds.includes(loan.id)}
+                          onChange={() => toggleLoanSelection(loan.id)}
+                          aria-label={`Select loan ${loan.id}`}
+                          className="h-4 w-4 accent-red-600 cursor-pointer"
+                        />
+                      </td>
+                    )}
                     <td className="p-4 font-medium text-gray-600 whitespace-nowrap">
                       #{loan.id}
                     </td>
