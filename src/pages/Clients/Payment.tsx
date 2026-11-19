@@ -18,7 +18,7 @@ import { Loader } from "lucide-react";
 const PaymentPage = () => {
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState("");
-  const { data, isLoading, isError } = useGetPaymentsQuery<any>({
+  const { data, isLoading, isError,refetch } = useGetPaymentsQuery<any>({
     page,
     page_size: 100,
     status: filter,
@@ -40,7 +40,7 @@ const PaymentPage = () => {
   const {
     data: loansData,
     isLoading: isActiveLoansLoading,
-    refetch,
+    refetch: refetchActiveLoans,
   } = useGetActiveLoansQuery();
   const [grid, setGrid] = useState(false);
 
@@ -55,7 +55,7 @@ const PaymentPage = () => {
   const activeLoans = Array.isArray(loansData)
     ? loansData
     : loansData?.results || [];
-  console.log("payment data", data);
+  // console.log("payment data", data);
   // const activeLoans = loans.filter(
   //   (l: any) =>
   //     Number(l.remaining_balance) > 0 &&
@@ -103,12 +103,13 @@ const PaymentPage = () => {
       loaderService.show();
       await reviewPayment({ id, action }).unwrap();
       refetch();
+      refetchActiveLoans();
       loaderService.hide();
       toast.success(`Payment ${action}d`);
     } catch (err: any) {
       loaderService.hide();
 
-      // console.log(err.data);
+      console.log(err.data);
 
       if (err?.data?.detail) {
         toast.error(err.data.detail);
@@ -146,6 +147,7 @@ const PaymentPage = () => {
       loaderService.show();
       await cancelPayment({ id }).unwrap();
       refetch();
+      refetchActiveLoans();
       toast.success("Payment cancelled");
       loaderService.hide();
     } catch {
@@ -177,6 +179,7 @@ const PaymentPage = () => {
         formData,
       }).unwrap();
       refetch();
+      refetchActiveLoans();
       loaderService.hide();
       toast.success("Payment updated successfully");
 
